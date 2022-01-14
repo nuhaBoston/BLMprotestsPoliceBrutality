@@ -5,6 +5,8 @@ output:
   PDF: default
 ---
 
+Importing all necessary libraries for analysis
+
 ```{r include=F}
 library(tidyverse)
 library(car)
@@ -14,6 +16,8 @@ library(alr4)
 #install.packages("AER")
 library(AER)
 ```
+
+Imported our data to clean up into multiple data frames 
 
 ```{r}
 alldat<-read_excel("Crime_Rate_2010_2020.xlsx")
@@ -35,14 +39,17 @@ write.csv(alldat, "alldat.csv")
 ```{r}
 #colnames(alldat)
 ```
-## Explore
+## Exploratory Analysis of potential regressors,i.e. Number of Kills, Average Median Income, Household Firehold Rate, Average Crime Rate, Number of Protests, Population Density, Percent of Population that has a bachelor's degree, Policing Per Capita Expenditure, Percent of Population that is White/Asian
+
 ```{r}
 scatterplotMatrix(~kills+`AMI`+ HFR +
                   `Average.Crime.Rate`+`Number.of.Protests`+`PopulationDensity`+
                   `percentbach`+`Policing.Per.Capita.Spend`+`PctWhiteAsian`,
                   regLine=F,smooth=F,data=alldat1, col="#69b3a2", main = "Scatterplot Matrix of All Possible Regressors")
 ```
-Without DC
+We noticed that DC has quite unusual numbers for our regressors which may because it is an urban area that has very high population density compared to states that have very high areas. We decided to do analysis of our data without DC. Similarly CA has the highest population and the highest number 
+
+Without DC or CA
 ```{r eval=FALSE, include=FALSE}
 
 noDC_CA<-alldat %>% filter(!`Fips Code` %in% c(11,6))  
@@ -58,6 +65,12 @@ scatterplotMatrix(~log(kills)+`AMI`+ HFR +
                   `percentbach`+`Policing Per Capita Spend`+`PctWhiteAsian`,
                   regLine=F,smooth=F,data=alldat,main="log T of Kills+Protests+Density")
 ```
+Our scatterplot matrix revealed that certain regressors needed to be transformed. We used log transformations because it is monotonic and spreads data points that are compressed at small values and pulls in data points that are spread out at high values. 
+
+We did: number of kills, number of protests, population density
+
+We also created a new variable for rate of kills instead of the raw number.
+
 ```{r eval=FALSE, include=FALSE}
 alldat$lkills<-log(alldat$kills)
 alldat$lprotests<-log(alldat$`Number of Protests`)
@@ -65,20 +78,23 @@ alldat$ldensity<-log(alldat$PopulationDensity)
 alldat$killsnorm<-(alldat$kills/alldat$PopulationTotal)*1000000
 ```
 
-
+We created a joint correlation table of all variables to see if there are any that are highly linearly correlated and might consider leaving them from our model in order not to skew it. 
 
 ```{r}
 ggcorr(data=alldat,label=F, ma)
 
 ```
+Instead of a linear regression, we did a poisson model because we are using count data. When dealing with count data, larger or smaller counts may be observed based on the size of the observational unit; we included an offset to counteract this.
 
-
+We created a base model with our main predictor of interest, i.e. Number of BLM protests 
 ```{r}
 model.2 <- glm(kills~`Number of Protests`,offset(log(PopulationTotal)),
                family = poisson(link = "log"), data = alldat)
 
 summary(model.2)
 ```
+We calculated the chi square statistic to test the deviance of our base model. 
+
 ```{r}
 pchisq(7189.4,df=49)
 ```
@@ -89,6 +105,9 @@ model.2 <- glm(kills~lprotests,
                 data = alldat)
 summary(model.2)
 ```
+We did both stepwise regression to help with variable selection. 
+
+
 ## Backwards selection 
 
 ```{r}
@@ -118,6 +137,8 @@ back.model<-glm(kills~lprotests+percentbach+ldensity+PctWhiteAsian+offset(log(Po
 ```{r}
 summary(back.model)
 ```
+
+Both models were very similar however one included the variable for percent of population with bachelors. We analyzed the model to see how significant this variable was. 
 ```{r}
 forw.model<-glm(kills~lprotests+ldensity+PctWhiteAsian+offset(log(PopulationTotal)),
                   data=alldat,family="poisson")
@@ -132,7 +153,7 @@ Anova(back.model)
 ```{r}
 1-pchisq(193.66-172.76,df=1)
 ```
-
+It was significant so we included the variable in the model. We then explored interaction terms. Our first try was with log(protests) and percentbach. 
 
 ```{r}
 int.model1<-glm(kills~lprotests+percentbach+ldensity+PctWhiteAsian+lprotests:percentbach
@@ -145,6 +166,7 @@ summary(int.model1)
 Anova(int.model1)
 ```
 
+We were curious to see how Average Crime Rate would impact our model, based on literature we had read for context. 
 ```{r}
 alldat$ACR<-alldat$`Average Crime Rate`
 
@@ -164,6 +186,7 @@ test<-summary(effect("ACR",crime.mod))
 plot(residuals(int.model1,"pearson"))
 
 ```
+We tested to see how large the overdispersion would be. Naturally overdispersion happens in models in which the two parameters, i.e. 
 ## Overdispersion
 ```{r}
 AER::dispersiontest(int.model1)
