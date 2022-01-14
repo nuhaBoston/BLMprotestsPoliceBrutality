@@ -6,7 +6,7 @@ We study the relationship between fatal police killings on a state level and soc
 
 ## Collaborators
 
-This project was a collaboration of Nuha F., Amy S. github: , Scott C., and Cookie P.  
+This project was a collaboration of Nuha F. github: , Amy S. github: https://github.com/amystphn, Scott C., and Cookie P.  
 
 ## Description
 
