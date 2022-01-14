@@ -193,7 +193,7 @@ plot(residuals(int.model1,"pearson"))
 AER::dispersiontest(int.model1)
 ```
 
-More analysis of other variables to potentially include in our model. After reading multiple papers about the significant correlation between police brutality and household firearm rate we decided to include this variable in our model. 
+#More analysis of other variables to potentially include in our model. After reading multiple papers about the significant correlation between police brutality and #household firearm rate we decided to include this variable in our model. 
 
 
 ```{r}
@@ -211,7 +211,8 @@ plot(effect("HFR", m1.hfr), main = "Effects of Household Firearm Rate")
 Anova(m1.hfr)
 ```
 
-Our variable selection algorithms agree that Household Firearm Rate, HFR, is significant for our model. 
+#Our variable selection algorithms agree that Household Firearm Rate, HFR, is significant for our model. 
+
 ```{r}
 #Backward Selection
 step(m1.hfr, scope=~1, direction="backward")
@@ -234,7 +235,8 @@ summary(m1.hfrinteraction)
 ```{r}
 step(m1.hfrinteraction, scope=~1, direction="backward")
 ```
-Our final model that we decided on after analyzing all our main possibilities. We decided that our HFR variable has an interaction with log(density) and our analysis of the model has a positive impact. 
+#Our final model that we decided on after analyzing all our main possibilities. We decided that our HFR variable has an interaction with log(density) and our #analysis of the model has a positive impact. 
+
 ```{r}
 mainmodel <- glm(kills ~ lprotests + HFR + percentbach + AMI + PctWhiteAsian + 
     ldensity + HFR:ldensity + offset(log(PopulationTotal)), family = "poisson", 
@@ -250,13 +252,14 @@ Anova(mainmodel)  %>% pander()
 
 ```
 
-More analysis of our model. 
+#More analysis of our model. 
 
 ```{r}
 plot(effect("HFR", mainmodel), main = "Effects of Household Firearm Rate")
 plot(effect("lprotests", mainmodel), main = "Effects of LProtests")
 ```
-Once again testing the dispersion to make sure it is not too high(however take this method with a grain of salt since we have such low count data) 
+#Once again testing the dispersion to make sure it is not too high(however take this method with a grain of salt since we have such low count data) 
+
 ```{r}
 AER::dispersiontest(mainmodel)
 #install.packages("PseudoR2")
