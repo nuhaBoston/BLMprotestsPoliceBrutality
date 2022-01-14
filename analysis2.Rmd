@@ -5,7 +5,7 @@ output:
   PDF: default
 ---
 
-Importing all necessary libraries for analysis
+#Importing all necessary libraries for analysis
 
 ```{r include=F}
 library(tidyverse)
@@ -17,7 +17,7 @@ library(alr4)
 library(AER)
 ```
 
-Imported our data to clean up into multiple data frames 
+#Imported our data to clean up into multiple data frames 
 
 ```{r}
 alldat<-read_excel("Crime_Rate_2010_2020.xlsx")
