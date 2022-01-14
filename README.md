@@ -28,12 +28,13 @@ Open the file analysis2 in RStudio and load all packages.
 
 ## Resources
 These were the sites that we sourced our data from:
-https://www.kff.org/other/state-indicator/state-political-parties/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D 
-https://crime-data-explorer.app.cloud.gov/pages/home
-https://www.moneygeek.com/living/state-policing-corrections-spending/
-https://acleddata.com/dashboard/#/dashboard 
-https://www.census.gov/topics/population.html 
-https://data.world/garyhoov/household-income-by-state
-https://www.rand.org/pubs/tools/TL354.html 
-https://corgis-edu.github.io/corgis/csv/state_demographics/	
+
+* https://www.kff.org/other/state-indicator/state-political-parties/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D 
+* https://crime-data-explorer.app.cloud.gov/pages/home
+* https://www.moneygeek.com/living/state-policing-corrections-spending/
+* https://acleddata.com/dashboard/#/dashboard 
+* https://www.census.gov/topics/population.html 
+* https://data.world/garyhoov/household-income-by-state
+* https://www.rand.org/pubs/tools/TL354.html 
+* https://corgis-edu.github.io/corgis/csv/state_demographics/	
 
