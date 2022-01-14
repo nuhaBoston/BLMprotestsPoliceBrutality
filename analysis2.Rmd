@@ -47,9 +47,9 @@ scatterplotMatrix(~kills+`AMI`+ HFR +
                   `percentbach`+`Policing.Per.Capita.Spend`+`PctWhiteAsian`,
                   regLine=F,smooth=F,data=alldat1, col="#69b3a2", main = "Scatterplot Matrix of All Possible Regressors")
 ```
-We noticed that DC has quite unusual numbers for our regressors which may because it is an urban area that has very high population density compared to states that have very high areas. We decided to do analysis of our data without DC. Similarly CA has the highest population and the highest number 
+#We noticed that DC has quite unusual numbers for our regressors which may because it is an urban area that has very high population density compared to states #that have very high areas. We decided to do analysis of our data without DC. Similarly CA has the highest population and the highest number 
 
-Without DC or CA
+#Without DC or CA
 ```{r eval=FALSE, include=FALSE}
 
 noDC_CA<-alldat %>% filter(!`Fips Code` %in% c(11,6))  
@@ -65,11 +65,11 @@ scatterplotMatrix(~log(kills)+`AMI`+ HFR +
                   `percentbach`+`Policing Per Capita Spend`+`PctWhiteAsian`,
                   regLine=F,smooth=F,data=alldat,main="log T of Kills+Protests+Density")
 ```
-Our scatterplot matrix revealed that certain regressors needed to be transformed. We used log transformations because it is monotonic and spreads data points that are compressed at small values and pulls in data points that are spread out at high values. 
+#Our scatterplot matrix revealed that certain regressors needed to be transformed. We used log transformations because it is monotonic and spreads data points that #are compressed at small values and pulls in data points that are spread out at high values. 
 
-We did: number of kills, number of protests, population density
+#We did: number of kills, number of protests, population density
 
-We also created a new variable for rate of kills instead of the raw number.
+#We also created a new variable for rate of kills instead of the raw number.
 
 ```{r eval=FALSE, include=FALSE}
 alldat$lkills<-log(alldat$kills)
@@ -78,22 +78,22 @@ alldat$ldensity<-log(alldat$PopulationDensity)
 alldat$killsnorm<-(alldat$kills/alldat$PopulationTotal)*1000000
 ```
 
-We created a joint correlation table of all variables to see if there are any that are highly linearly correlated and might consider leaving them from our model in order not to skew it. 
+#We created a joint correlation table of all variables to see if there are any that are highly linearly correlated and might consider leaving them from our model #in order not to skew it. 
 
 ```{r}
 ggcorr(data=alldat,label=F, ma)
 
 ```
-Instead of a linear regression, we did a poisson model because we are using count data. When dealing with count data, larger or smaller counts may be observed based on the size of the observational unit; we included an offset to counteract this.
+#Instead of a linear regression, we did a poisson model because we are using count data. When dealing with count data, larger or smaller counts may be observed #based on the size of the observational unit; we included an offset to counteract this.
 
-We created a base model with our main predictor of interest, i.e. Number of BLM protests 
+#We created a base model with our main predictor of interest, i.e. Number of BLM protests 
 ```{r}
 model.2 <- glm(kills~`Number of Protests`,offset(log(PopulationTotal)),
                family = poisson(link = "log"), data = alldat)
 
 summary(model.2)
 ```
-We calculated the chi square statistic to test the deviance of our base model. 
+#We calculated the chi square statistic to test the deviance of our base model. 
 
 ```{r}
 pchisq(7189.4,df=49)
@@ -105,7 +105,7 @@ model.2 <- glm(kills~lprotests,
                 data = alldat)
 summary(model.2)
 ```
-We did both stepwise regression to help with variable selection. 
+#We did both stepwise regression to help with variable selection. 
 
 
 ## Backwards selection 
@@ -138,7 +138,7 @@ back.model<-glm(kills~lprotests+percentbach+ldensity+PctWhiteAsian+offset(log(Po
 summary(back.model)
 ```
 
-Both models were very similar however one included the variable for percent of population with bachelors. We analyzed the model to see how significant this variable was. 
+#Both models were very similar however one included the variable for percent of population with bachelors. We analyzed the model to see how significant this #variable was. 
 ```{r}
 forw.model<-glm(kills~lprotests+ldensity+PctWhiteAsian+offset(log(PopulationTotal)),
                   data=alldat,family="poisson")
@@ -153,7 +153,7 @@ Anova(back.model)
 ```{r}
 1-pchisq(193.66-172.76,df=1)
 ```
-It was significant so we included the variable in the model. We then explored interaction terms. Our first try was with log(protests) and percentbach. 
+#It was significant so we included the variable in the model. We then explored interaction terms. Our first try was with log(protests) and percentbach. 
 
 ```{r}
 int.model1<-glm(kills~lprotests+percentbach+ldensity+PctWhiteAsian+lprotests:percentbach
@@ -166,7 +166,7 @@ summary(int.model1)
 Anova(int.model1)
 ```
 
-We were curious to see how Average Crime Rate would impact our model, based on literature we had read for context. 
+#We were curious to see how Average Crime Rate would impact our model, based on literature we had read for context. 
 ```{r}
 alldat$ACR<-alldat$`Average Crime Rate`
 
@@ -186,11 +186,15 @@ test<-summary(effect("ACR",crime.mod))
 plot(residuals(int.model1,"pearson"))
 
 ```
-We tested to see how large the overdispersion would be. Naturally overdispersion happens in models in which the two parameters, i.e. 
+#We tested to see how large the overdispersion would be. Naturally overdispersion happens in models in which the two parameters, i.e. variance and mean, are the same. 
+
 ## Overdispersion
 ```{r}
 AER::dispersiontest(int.model1)
 ```
+
+More analysis of other variables to potentially include in our model. After reading multiple papers about the significant correlation between police brutality and household firearm rate we decided to include this variable in our model. 
+
 
 ```{r}
 alldat1$PPC = alldat1$`Policing.Per.Capita.Spend`
@@ -206,6 +210,8 @@ plot(effect("HFR", m1.hfr), main = "Effects of Household Firearm Rate")
 ```{r}
 Anova(m1.hfr)
 ```
+
+Our variable selection algorithms agree that Household Firearm Rate, HFR, is significant for our model. 
 ```{r}
 #Backward Selection
 step(m1.hfr, scope=~1, direction="backward")
@@ -228,7 +234,7 @@ summary(m1.hfrinteraction)
 ```{r}
 step(m1.hfrinteraction, scope=~1, direction="backward")
 ```
-
+Our final model that we decided on after analyzing all our main possibilities. We decided that our HFR variable has an interaction with log(density) and our analysis of the model has a positive impact. 
 ```{r}
 mainmodel <- glm(kills ~ lprotests + HFR + percentbach + AMI + PctWhiteAsian + 
     ldensity + HFR:ldensity + offset(log(PopulationTotal)), family = "poisson", 
@@ -244,12 +250,13 @@ Anova(mainmodel)  %>% pander()
 
 ```
 
+More analysis of our model. 
 
 ```{r}
 plot(effect("HFR", mainmodel), main = "Effects of Household Firearm Rate")
 plot(effect("lprotests", mainmodel), main = "Effects of LProtests")
 ```
-
+Once again testing the dispersion to make sure it is not too high(however take this method with a grain of salt since we have such low count data) 
 ```{r}
 AER::dispersiontest(mainmodel)
 #install.packages("PseudoR2")
