@@ -1,0 +1,240 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  PDF: default
+---
+
+```{r include=F}
+library(tidyverse)
+library(car)
+library(readxl)
+library(GGally)
+library(alr4)
+#install.packages("AER")
+library(AER)
+```
+
+```{r}
+alldat<-read_excel("Crime_Rate_2010_2020.xlsx")
+rawdat<-read_excel("Crime_Rate_2010_2020.xlsx",sheet=2)
+alldat1 <- read.csv("alldat.csv")
+
+```
+
+```{r eval=FALSE, include=FALSE}
+alldat$HFR <- hrfstats$HFR
+#alldat$kills_norm<-alldat$kills/alldat$
+```
+
+```{r eval=FALSE, include=FALSE}
+write.csv(alldat, "alldat.csv")
+```
+
+
+```{r}
+#colnames(alldat)
+```
+## Explore
+```{r}
+scatterplotMatrix(~kills+`AMI`+ HFR +
+                  `Average.Crime.Rate`+`Number.of.Protests`+`PopulationDensity`+
+                  `percentbach`+`Policing.Per.Capita.Spend`+`PctWhiteAsian`,
+                  regLine=F,smooth=F,data=alldat1, col="#69b3a2", main = "Scatterplot Matrix of All Possible Regressors")
+```
+Without DC
+```{r eval=FALSE, include=FALSE}
+
+noDC_CA<-alldat %>% filter(!`Fips Code` %in% c(11,6))  
+scatterplotMatrix(~kills+`AMI`+ alldat1$HFR +
+                  `Average Crime Rate`+`Number of Protests`+`PopulationDensity`+
+                  `percentbach`+`Policing Per Capita Spend`+`PctWhiteAsian`,
+                  regLine=F,smooth=F,data=noDC_CA,main="No DC or CA")
+```
+```{r eval=FALSE, include=FALSE}
+#noCA_TX<-alldat %>% filter(!`Fips Code` %in% c(6,48))  
+scatterplotMatrix(~log(kills)+`AMI`+ HFR +
+                  `Average Crime Rate`+log(`Number of Protests`)+log(`PopulationDensity`)+
+                  `percentbach`+`Policing Per Capita Spend`+`PctWhiteAsian`,
+                  regLine=F,smooth=F,data=alldat,main="log T of Kills+Protests+Density")
+```
+```{r eval=FALSE, include=FALSE}
+alldat$lkills<-log(alldat$kills)
+alldat$lprotests<-log(alldat$`Number of Protests`)
+alldat$ldensity<-log(alldat$PopulationDensity)
+alldat$killsnorm<-(alldat$kills/alldat$PopulationTotal)*1000000
+```
+
+
+
+```{r}
+ggcorr(data=alldat,label=F, ma)
+
+```
+
+
+```{r}
+model.2 <- glm(kills~`Number of Protests`,offset(log(PopulationTotal)),
+               family = poisson(link = "log"), data = alldat)
+
+summary(model.2)
+```
+```{r}
+pchisq(7189.4,df=49)
+```
+
+
+```{r}
+model.2 <- glm(kills~lprotests,
+                data = alldat)
+summary(model.2)
+```
+## Backwards selection 
+
+```{r}
+subset <- alldat %>% select(-`Fips Code`, -State)
+m1 <- glm(kills ~ `Average Crime Rate`+lprotests+`Policing Per Capita Spend` +
+            percentbach+AMI+`Political Affiliation(Binary)`+PctWhiteAsian+ldensity+offset(log(PopulationTotal)), 
+          data=alldat,family='poisson')
+
+
+step(m1,scope=~1, direction="backward")
+
+```
+## Forward selection
+
+```{r}
+m2<-glm(kills~1,data=subset)
+step(m2,scope= ~ `Average Crime Rate`+log(`Number of Protests`)+`Policing Per Capita Spend`+ HFR+
+            percentbach+AMI+`Political Affiliation(Binary)`+PctWhiteAsian+log(PopulationDensity)+offset(log(PopulationTotal)), direction="forward")
+
+
+```
+```{r}
+back.model<-glm(kills~lprotests+percentbach+ldensity+PctWhiteAsian+offset(log(PopulationTotal)),
+                  data=alldat,family="poisson")
+```
+
+```{r}
+summary(back.model)
+```
+```{r}
+forw.model<-glm(kills~lprotests+ldensity+PctWhiteAsian+offset(log(PopulationTotal)),
+                  data=alldat,family="poisson")
+
+summary(forw.model)
+```
+```{r}
+Anova(back.model)
+```
+## LR test for including percentbach or not
+
+```{r}
+1-pchisq(193.66-172.76,df=1)
+```
+
+
+```{r}
+int.model1<-glm(kills~lprotests+percentbach+ldensity+PctWhiteAsian+lprotests:percentbach
+                +offset(log(PopulationTotal)),
+                  data=alldat,family="poisson")
+summary(int.model1)
+```
+
+```{r}
+Anova(int.model1)
+```
+
+```{r}
+alldat$ACR<-alldat$`Average Crime Rate`
+
+crime.mod<-glm(kills~lprotests+percentbach+ldensity+PctWhiteAsian+ACR+lprotests:percentbach
+                +offset(log(PopulationTotal)),
+                  data=alldat,family="poisson")
+summary(crime.mod)
+```
+
+```{r}
+plot(effect("ACR",crime.mod,))
+test<-summary(effect("ACR",crime.mod))
+
+```
+## Residuals
+```{r}
+plot(residuals(int.model1,"pearson"))
+
+```
+## Overdispersion
+```{r}
+AER::dispersiontest(int.model1)
+```
+
+```{r}
+alldat1$PPC = alldat1$`Policing.Per.Capita.Spend`
+alldat$PoliticalAffiliation = alldat$`Political.Affiliation(Binary)`
+
+m1.hfr <- glm(kills ~ lprotests+ PPC + HFR +
+            percentbach+AMI+ PoliticalAffiliation+PctWhiteAsian+ldensity+offset(log(PopulationTotal)), 
+          data=alldat1,family='poisson')
+plot(effect("HFR", m1.hfr), main = "Effects of Household Firearm Rate")
+```
+
+
+```{r}
+Anova(m1.hfr)
+```
+```{r}
+#Backward Selection
+step(m1.hfr, scope=~1, direction="backward")
+
+```
+
+```{r}
+m1.hfrbackward <- glm(kills ~ lprotests + HFR + percentbach + AMI + PctWhiteAsian + 
+    ldensity + offset(log(PopulationTotal)), family = "poisson", 
+    data = alldat)
+
+m1.hfrinteraction <- glm(kills ~ lprotests+ PPC + HFR +
+            percentbach+AMI+ PoliticalAffiliation+PctWhiteAsian+ldensity+ ldensity:HFR + offset(log(PopulationTotal)), 
+          data=alldat,family='poisson')
+summary(m1.hfr)
+summary(m1.hfrbackward)
+summary(m1.hfrinteraction)
+```
+
+```{r}
+step(m1.hfrinteraction, scope=~1, direction="backward")
+```
+
+```{r}
+mainmodel <- glm(kills ~ lprotests + HFR + percentbach + AMI + PctWhiteAsian + 
+    ldensity + HFR:ldensity + offset(log(PopulationTotal)), family = "poisson", 
+    data = alldat1)
+
+
+plot(residuals(mainmodel, "pearson"))
+```
+```{r}
+library(pander)
+Anova(mainmodel)  %>% pander()
+
+
+```
+
+
+```{r}
+plot(effect("HFR", mainmodel), main = "Effects of Household Firearm Rate")
+plot(effect("lprotests", mainmodel), main = "Effects of LProtests")
+```
+
+```{r}
+AER::dispersiontest(mainmodel)
+#install.packages("PseudoR2")
+#library(DescTools)
+#library(PseudoR2)
+#PseudoR2(mainmodel, which = "McKelveyZavoina")
+```
+
+
+
+
