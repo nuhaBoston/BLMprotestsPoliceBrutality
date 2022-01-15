@@ -37,4 +37,7 @@ These were the sites that we sourced our data from:
 * https://data.world/garyhoov/household-income-by-state
 * https://www.rand.org/pubs/tools/TL354.html 
 * https://corgis-edu.github.io/corgis/csv/state_demographics/	
+* https://policescorecard.org
+* https://www.huduser.gov/portal/AHS-neighborhood-description-study-2017.html#small-area-tab
+* https://mappingpoliceviolence.org/aboutthedata
 
